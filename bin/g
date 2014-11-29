@@ -1,0 +1,118 @@
+VERSION="0.0.1"
+
+UP=$'\033[A'
+DOWN=$'\033[B'
+
+log() {
+  printf "  \033[36m%10s\033[0m : \033[90m%s\033[0m\n" $1 $2
+}
+
+abort() {
+  printf "\n  \033[31mError: $@\033[0m\n\n" && exit 1
+}
+
+test `command -v git` || abort "git required"
+
+display_help() {
+  cat <<-EOF
+
+  Usage: g [options] [COMMAND]
+
+  Commands:
+
+    g                            Output local branches installed
+
+  Options:
+
+    -v, --version   Output current version of g
+    -h, --help      Display help information
+
+EOF
+  exit 0
+}
+
+display_version() {
+  echo $VERSION && exit 0
+}
+
+branches() {
+  test `current_branch` || current_head
+  git for-each-ref --format='%(refname:short)' refs/heads
+}
+
+current_branch() {
+  git symbolic-ref --short -q HEAD
+}
+
+current_head() {
+  git rev-parse --short HEAD
+}
+
+check_current_branch() {
+  active=`current_branch` || active=`current_head`
+}
+
+display_branches_with_selected() {
+  selected=$1
+  echo
+  for version in `branches`; do
+    if test "$version" = "$selected"; then
+      printf "  \033[36mο\033[0m $version\033[0m\n"
+    else
+      printf "    \033[90m$version\033[0m\n"
+    fi
+  done
+  echo
+}
+
+next_branch() {
+  branches | grep -x $selected -A 1 | tail -n 1
+}
+
+prev_branch() {
+  branches | grep -x $selected -B 1 | head -n 1
+}
+
+activate() {
+  local version=$1
+  check_current_branch
+  if test "$version" != "$active"; then
+    git checkout $version
+  fi
+}
+
+display_branch() {
+  clear
+  check_current_branch
+  display_branches_with_selected $active
+  while true; do
+    read -s -n 3 c
+    case "$c" in
+      $UP)
+        clear
+        display_branches_with_selected $(prev_branch)
+        ;;
+      $DOWN)
+        clear
+        display_branches_with_selected $(next_branch)
+        ;;
+      *)
+        clear
+        activate $selected
+        exit
+        ;;
+    esac
+  done
+}
+
+if test $# -eq 0; then
+  display_branch
+else
+  while test $# -ne 0; do
+    case $1 in
+      -v|--version|version) display_version ;;
+      -h|--help|help) display_help ;;
+    esac
+    shift
+  done
+fi
