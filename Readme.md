@@ -14,11 +14,9 @@ to `$HOME`.
 
     $ PREFIX=$HOME make install
 
-### Installing Binaries
+### Switching branches
 
-Type `g` to prompt selection of a local git branch. Use the up /
-down arrow to navigate, and press enter or the right arrow to
-select, or ^C to cancel:
+Type `g` to prompt selection of a local git branch. Use the up / down arrow to navigate, and press right arrow to select, or left arrow to cancel:
 
     $ g
 
