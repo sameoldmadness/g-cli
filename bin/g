@@ -1,9 +1,4 @@
-VERSION="0.0.3"
-
-UP=$'\033[A'
-DOWN=$'\033[B'
-RIGHT=$'\033[C'
-LEFT=$'\033[D'
+VERSION="0.0.4"
 
 log() {
   printf "  \033[36m%10s\033[0m : \033[90m%s\033[0m\n" $1 $2
@@ -105,30 +100,84 @@ activate() {
   fi
 }
 
+action_up() {
+  refresh_fullscreen
+  display_branches_with_selected $(prev_branch)
+}
+
+action_down() {
+  refresh_fullscreen
+  display_branches_with_selected $(next_branch)
+}
+
+action_exit() {
+  leave_fullscreen
+  exit
+}
+
+action_enter() {
+  activate $selected
+  action_exit
+}
+
+read_key()
+{
+  local kp
+  ESC=$'\e'
+  _KEY=
+  read -d '' -sn1 _KEY
+  case $_KEY in
+    "$ESC")
+        while read -d '' -sn1 -t0.1 kp
+        do
+          _KEY=$_KEY$kp
+          case $kp in
+            [a-zA-NP-Z~]) break;;
+          esac
+        done
+    ;;
+  esac
+  case $_KEY in
+    $'\e[11~' | $'\e[OP') key=F1 ;;
+    $'\e[12~' | $'\e[OQ') key=F2 ;;
+    $'\e[13~' | $'\e[OR') key=F3 ;;
+    $'\e[14~' | $'\e[OS') key=F4 ;;
+    $'\e[15~') key=F5 ;;
+    $'\e[16~') key=F6 ;;
+    $'\e[17~') key=F7 ;;
+    $'\e[18~') key=F8 ;;
+    $'\e[19~') key=F9 ;;
+    $'\e[20~') key=F10 ;;
+    $'\e[21~') key=F11 ;;
+    $'\e[22~') key=F12 ;;
+    $'\e[A' ) key=UP ;;
+    $'\e[B' ) key=DOWN ;;
+    $'\e[C' ) key=RIGHT ;;
+    $'\e[D' ) key=LEFT ;;
+    $'\e' ) key=ESC ;;
+    ?) key=$_KEY ;;
+    *)
+      if [ `printf %x "'$_KEY"` = 0 ]
+      then
+        key='ENTER_OR_SPACE'
+      else
+        key=???
+      fi
+    ;;
+  esac
+}
+
 display_branch() {
   enter_fullscreen
   check_current_branch
   display_branches_with_selected $active
   while true; do
-    read -s -n 3 c
-    case "$c" in
-      $UP)
-        refresh_fullscreen
-        display_branches_with_selected $(prev_branch)
-        ;;
-      $DOWN)
-        refresh_fullscreen
-        display_branches_with_selected $(next_branch)
-        ;;
-      $RIGHT)
-        leave_fullscreen
-        activate $selected
-        exit
-        ;;
-      $LEFT)
-        leave_fullscreen
-        exit
-        ;;
+    read_key
+    case "$key" in
+      w|W|UP) action_up;;
+      s|S|DOWN) action_down;;
+      d|D|RIGHT|ENTER_OR_SPACE) action_enter;;
+      a|A|LEFT|ESC) action_exit;;
     esac
   done
 }

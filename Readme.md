@@ -23,6 +23,8 @@ Type `g` to prompt selection of a local git branch. Use the up / down arrow to n
       master
     ο develop
 
+You can also use `WASD` instead of arrow keys, `space` or `enter` to submit and `escape` to exit.
+
 ## Usage
 
  Output from `g --help`:
