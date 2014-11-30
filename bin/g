@@ -1,4 +1,4 @@
-VERSION="0.0.4"
+VERSION="0.0.5"
 
 log() {
   printf "  \033[36m%10s\033[0m : \033[90m%s\033[0m\n" $1 $2
@@ -19,11 +19,13 @@ show_cursor() {
 enter_fullscreen() {
   tput smcup
   hide_cursor
+  stty -echo
 }
 
 leave_fullscreen() {
   show_cursor
   tput rmcup
+  stty echo
 }
 
 refresh_fullscreen() {
@@ -31,6 +33,24 @@ refresh_fullscreen() {
 }
 
 test `command -v git` || abort "git required"
+
+handle_sigcont() {
+  display_branch
+}
+
+handle_sigint() {
+  leave_fullscreen
+  exit $?
+}
+
+handle_sigtstp() {
+  leave_fullscreen
+  kill -s SIGSTOP $$
+}
+
+trap handle_sigtstp SIGTSTP
+trap handle_sigint SIGINT
+trap handle_sigcont SIGCONT
 
 display_help() {
   cat <<-EOF
@@ -125,10 +145,10 @@ read_key()
   local kp
   ESC=$'\e'
   _KEY=
-  read -d '' -sn1 _KEY
+  read -d '' -n1 _KEY
   case $_KEY in
     "$ESC")
-        while read -d '' -sn1 -t0.1 kp
+        while read -d '' -n1 -t0.1 kp
         do
           _KEY=$_KEY$kp
           case $kp in
@@ -174,10 +194,10 @@ display_branch() {
   while true; do
     read_key
     case "$key" in
-      w|W|UP) action_up;;
-      s|S|DOWN) action_down;;
-      d|D|RIGHT|ENTER_OR_SPACE) action_enter;;
-      a|A|LEFT|ESC) action_exit;;
+      w|W|UP) action_up ;;
+      s|S|DOWN) action_down ;;
+      d|D|RIGHT|ENTER_OR_SPACE) action_enter ;;
+      a|A|q|Q|LEFT|ESC) action_exit ;;
     esac
   done
 }
