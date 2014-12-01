@@ -33,12 +33,13 @@ You can also use `WASD` instead of arrow keys, `space` or `enter` to submit, `es
 
     Commands:
   
-      g                            Output local branches installed
+      g               Output local branches installed
   
     Options:
   
       -v, --version   Output current version of g
       -h, --help      Display help information
+      -r, --remote    Create local branch from remote
 
 ## License
 
