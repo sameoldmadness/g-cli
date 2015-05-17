@@ -1,6 +1,10 @@
 # g
 
-Simple git branch switcher, heavily based on TJ's [n](https://github.com/tj/n).
+Switch between branches like a boss!
+
+![](http://i.giphy.com/3o85xIvZUggpli4WPu.gif)
+
+Inspired by TJ's [n](https://github.com/tj/n).
 
 ## Installation
 
