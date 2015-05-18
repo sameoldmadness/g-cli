@@ -2,7 +2,7 @@
 
 Switch between branches like a boss!
 
-*Note: Does not work on Windows at the moment. Pull Requests are appreciated.*b
+*Note: Does not work on Windows at the moment. Pull Requests are appreciated.*
 
 ![](http://i.giphy.com/3o85xIvZUggpli4WPu.gif)
 
