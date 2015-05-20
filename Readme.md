@@ -2,13 +2,13 @@
 
 Switch between branches like a boss!
 
-*Note: Does not work on Windows at the moment. Pull Requests are appreciated.*
-
 ![](http://i.giphy.com/3o85xIvZUggpli4WPu.gif)
 
 Inspired by TJ's [n](https://github.com/tj/n).
 
 ## Installation
+
+### Linux
 
     $ npm install -g g-cli
 
@@ -20,16 +20,20 @@ to `$HOME`.
 
     $ PREFIX=$HOME make install
 
+### Windows
+
+Copy `g.bat` to `C:\Windows\System32` or any other directory within `PATH` variable.
+
 ### Switching branches
 
-Type `g` to prompt selection of a local git branch. Use the up / down arrow to navigate, and press right arrow to select, or left arrow to cancel:
+Type `g` to prompt selection of a local git branch. Use the `W` to go up, `A` to go down, `S` to select and `D` to cancel:
 
     $ g
 
       master
     ο develop
 
-You can also use `WASD` instead of arrow keys, `space` or `enter` to submit, `escape` or `q` to exit.
+On Linux you can also use arrow keys, `space` or `enter` to submit, `escape` or `q` to exit.
 
 ## Usage
 
