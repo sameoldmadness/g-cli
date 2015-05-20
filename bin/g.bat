@@ -32,8 +32,61 @@ goto:eof
 setlocal
   cls
   call:checkCurrentBranch branch
-  call:displayLocalBranchesWithSelected %branch%
+  call:readKeyLocal %branch%
 endlocal
+goto:eof
+
+:readKeyLocal
+call:displayLocalBranchesWithSelected %branch%
+
+choice /c wasd /n
+cls
+
+if "%errorlevel%"=="1" call:prevLocalBranch branch
+if "%errorlevel%"=="2" goto:exit
+if "%errorlevel%"=="3" call:nextLocalBranch branch
+if "%errorlevel%"=="4" call:activate %branch%&goto:exit
+
+call:readKeyLocal %branch%
+goto:eof
+
+:activate
+setlocal
+  call:checkCurrentBranch current
+  if "%~1"=="%current%" (type nul) else git checkout %~1
+endlocal
+goto:eof
+
+:prevLocalBranch
+setlocal EnableDelayedExpansion
+  set /a counter=0
+  set cmd="git for-each-ref --format=%%(refname:short) refs/heads"
+  (for /f "delims=" %%i in ('%cmd%') do (
+    set branches[!counter!]=%%i
+    if "%%i"=="!%~1!" set /a curBranchIndex=!counter!
+    set /a counter+=1
+  )) 2>nul
+  set /a nextBranchIndex=curBranchIndex-1
+  set nextBranch=!branches[%nextBranchIndex%]!
+(endlocal
+  if "%nextBranch%"=="" (type nul) else (set %~1=%nextBranch%)
+)
+goto:eof
+
+:nextLocalBranch
+setlocal EnableDelayedExpansion
+  set /a counter=0
+  set cmd="git for-each-ref --format=%%(refname:short) refs/heads"
+  (for /f "delims=" %%i in ('%cmd%') do (
+    set branches[!counter!]=%%i
+    if "%%i"=="!%~1!" set curBranchIndex=!counter!
+    set /a counter+=1
+  )) 2>nul
+  set /a nextBranchIndex=curBranchIndex+1
+  set nextBranch=!branches[%nextBranchIndex%]!
+(endlocal
+  if "%nextBranch%"=="" (type nul) else (set %~1=%nextBranch%)
+)
 goto:eof
 
 :checkCurrentBranch
@@ -63,7 +116,7 @@ endlocal
 goto:eof
 
 :displayRemoteBranches
-  echo.show remote branches
+  echo.not implemented
 goto:eof
 
 :displayHelp
