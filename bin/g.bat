@@ -116,7 +116,76 @@ endlocal
 goto:eof
 
 :displayRemoteBranches
-  echo.not implemented
+setlocal
+  cls
+  call:checkCurrentBranch branch
+  call:readKeyRemote %branch%
+endlocal
+goto:eof
+
+:readKeyRemote
+call:displayRemoteBranchesWithSelected %branch%
+
+choice /c wasd /n
+cls
+
+if "%errorlevel%"=="1" call:prevRemoteBranch branch
+if "%errorlevel%"=="2" goto:exit
+if "%errorlevel%"=="3" call:nextRemoteBranch branch
+if "%errorlevel%"=="4" call:createFromRemote %branch%&goto:exit
+
+call:readKeyRemote %branch%
+goto:eof
+
+:displayRemoteBranchesWithSelected
+setlocal EnableDelayedExpansion
+  set cmd="git ls-remote --heads origin"
+  (for /f "delims=" %%i in ('%cmd%') do (
+    set ref=%%i
+    set name=!ref:~52!
+    if "!name!"=="%~1" (echo.* !name!) else (echo.  !name!)
+  )) 2>nul
+endlocal
+goto:eof
+
+:prevRemoteBranch
+setlocal EnableDelayedExpansion
+  set /a counter=0
+  set cmd="git ls-remote --heads origin"
+  (for /f "delims=" %%i in ('%cmd%') do (
+    set ref=%%i
+    set name=!ref:~52!
+    set branches[!counter!]=!name!
+    if "!name!"=="!%~1!" set /a curBranchIndex=!counter!
+    set /a counter+=1
+  )) 2>nul
+  set /a nextBranchIndex=curBranchIndex-1
+  set nextBranch=!branches[%nextBranchIndex%]!
+(endlocal
+  if "%nextBranch%"=="" (type nul) else (set %~1=%nextBranch%)
+)
+goto:eof
+
+:nextRemoteBranch
+setlocal EnableDelayedExpansion
+  set /a counter=0
+  set cmd="git ls-remote --heads origin"
+  (for /f "delims=" %%i in ('%cmd%') do (
+    set ref=%%i
+    set name=!ref:~52!
+    set branches[!counter!]=!name!
+    if "!name!"=="!%~1!" set /a curBranchIndex=!counter!
+    set /a counter+=1
+  )) 2>nul
+  set /a nextBranchIndex=curBranchIndex+1
+  set nextBranch=!branches[%nextBranchIndex%]!
+(endlocal
+  if "%nextBranch%"=="" (type nul) else (set %~1=%nextBranch%)
+)
+goto:eof
+
+:createFromRemote
+  git checkout -b %~1 origin/%~1
 goto:eof
 
 :displayHelp
