@@ -8,23 +8,31 @@ goto:exit
 
 :display
 setlocal
-  set action=Help
+  set action=displayHelp
 
-  if "%1"=="" set action=LocalBranches
+  if "%1"=="" set action=displayBranches Local
 
-  if "%1"=="-r" set action=RemoteBranches
-  if "%1"=="--remote" set action=RemoteBranches
-  if "%1"=="remote" set action=RemoteBranches
+  if "%1"=="-r" set action=displayBranches Remote
+  if "%1"=="--remote" set action=displayBranches Remote
+  if "%1"=="remote" set action=displayBranches Remote
 
-  if "%1"=="-v" set action=Version
-  if "%1"=="--version" set action=Version
-  if "%1"=="version" set action=Version
+  if "%1"=="-v" set action=displayVersion
+  if "%1"=="--version" set action=displayVersion
+  if "%1"=="version" set action=displayVersion
 
-  if "%1"=="-h" set action=Help
-  if "%1"=="--help" set action=Help
-  if "%1"=="help" set action=Help
+  if "%1"=="-h" set action=displayHelp
+  if "%1"=="--help" set action=displayHelp
+  if "%1"=="help" set action=displayHelp
 
-  call:display%action%
+  call:%action%
+endlocal
+goto:eof
+
+:displayBranches
+setlocal
+  cls
+  call:checkCurrentBranch branch
+  call:readKey%1 %branch%
 endlocal
 goto:eof
 
@@ -34,14 +42,6 @@ setlocal
 (endlocal
   set %~2=%res%
 )
-goto:eof
-
-:displayLocalBranches
-setlocal
-  cls
-  call:checkCurrentBranch branch
-  call:readKeyLocal %branch%
-endlocal
 goto:eof
 
 :readKeyLocal
@@ -120,14 +120,6 @@ setlocal
   (for /f "delims=" %%i in ('%cmd%') do (
     if "%%i"=="%~1" (echo.* %%i) else (echo.  %%i)
   )) 2>nul
-endlocal
-goto:eof
-
-:displayRemoteBranches
-setlocal
-  cls
-  call:checkCurrentBranch branch
-  call:readKeyRemote %branch%
 endlocal
 goto:eof
 
