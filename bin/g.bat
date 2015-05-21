@@ -142,7 +142,7 @@ setlocal EnableDelayedExpansion
   set cmd="git ls-remote --heads origin"
   (for /f "delims=" %%i in ('%cmd%') do (
     set ref=%%i
-    set name=!ref:~52!
+    set name=!ref:*refs/heads/=!
     if "!name!"=="%~1" (echo.* !name!) else (echo.  !name!)
   )) 2>nul
 endlocal
@@ -154,7 +154,7 @@ setlocal EnableDelayedExpansion
   set cmd="git ls-remote --heads origin"
   (for /f "delims=" %%i in ('%cmd%') do (
     set ref=%%i
-    set name=!ref:~52!
+    set name=!ref:*refs/heads/=!
     set branches[!counter!]=!name!
     if "!name!"=="!%~1!" set /a curBranchIndex=!counter!
     set /a counter+=1
@@ -172,7 +172,7 @@ setlocal EnableDelayedExpansion
   set cmd="git ls-remote --heads origin"
   (for /f "delims=" %%i in ('%cmd%') do (
     set ref=%%i
-    set name=!ref:~52!
+    set name=!ref:*refs/heads/=!
     set branches[!counter!]=!name!
     if "!name!"=="!%~1!" set /a curBranchIndex=!counter!
     set /a counter+=1
