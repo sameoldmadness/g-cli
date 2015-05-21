@@ -2,23 +2,31 @@
 setlocal
 
 set VERSION=0.0.6
-set arg1=%~1
 
-if not defined arg1 call:displayLocalBranches&goto:exit
+call:display %1
+goto:exit
 
-if "%arg1%"=="-r" call:displayRemoteBranches&goto:exit
-if "%arg1%"=="--remote" call:displayRemoteBranches&goto:exit
-if "%arg1%"=="remote" call:displayRemoteBranches&goto:exit
+:display
+setlocal
+  set action=Help
 
-if "%arg1%"=="-v" call:displayVersion&goto:exit
-if "%arg1%"=="--version" call:displayVersion&goto:exit
-if "%arg1%"=="version" call:displayVersion&goto:exit
+  if "%1"=="" set action=LocalBranches
 
-if "%arg1%"=="-h" call:displayHelp&goto:exit
-if "%arg1%"=="--help" call:displayHelp&goto:exit
-if "%arg1%"=="help" call:displayHelp&goto:exit
+  if "%1"=="-r" set action=RemoteBranches
+  if "%1"=="--remote" set action=RemoteBranches
+  if "%1"=="remote" set action=RemoteBranches
 
-call:displayHelp&goto:exit
+  if "%1"=="-v" set action=Version
+  if "%1"=="--version" set action=Version
+  if "%1"=="version" set action=Version
+
+  if "%1"=="-h" set action=Help
+  if "%1"=="--help" set action=Help
+  if "%1"=="help" set action=Help
+
+  call:display%action%
+endlocal
+goto:eof
 
 :exec
 setlocal
