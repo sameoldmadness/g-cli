@@ -3,6 +3,9 @@ setlocal
 
 set VERSION=0.0.6
 
+set GIT_LOCAL_BRANCHES="git for-each-ref --format=%%%%(refname:short) refs/heads"
+set GIT_REMOTE_BRANCHES="git ls-remote --heads origin"
+
 call:display %1
 goto:exit
 
@@ -10,11 +13,11 @@ goto:exit
 setlocal
   set action=displayHelp
 
-  if "%1"=="" set action=displayBranches Local
+  if "%1"=="" set action=runLoop Local
 
-  if "%1"=="-r" set action=displayBranches Remote
-  if "%1"=="--remote" set action=displayBranches Remote
-  if "%1"=="remote" set action=displayBranches Remote
+  if "%1"=="-r" set action=runLoop Remote
+  if "%1"=="--remote" set action=runLoop Remote
+  if "%1"=="remote" set action=runLoop Remote
 
   if "%1"=="-v" set action=displayVersion
   if "%1"=="--version" set action=displayVersion
@@ -28,40 +31,73 @@ setlocal
 endlocal
 goto:eof
 
-:displayBranches
+:runLoop
 setlocal
   cls
-  call:checkCurrentBranch branch
-  call:readKey%1 %branch%
+  call:getCurrentBranch branch
+  call:readKey %1 %branch%
 endlocal
+goto:eof
+
+:getCurrentBranch
+setlocal
+  call:exec return "git symbolic-ref --short -q HEAD"
+  if not defined return call:exec return "git rev-parse --short HEAD"
+endlocal & set %~1=%return%
 goto:eof
 
 :exec
 setlocal
-  (for /f "delims=" %%i in ('%~1') do set res=%%i) 2>nul
-(endlocal
-  set %~2=%res%
-)
+  (for /f "delims=" %%i in ('%~2') do set return=%%i) 2>nul
+endlocal & set %~1=%return%
 goto:eof
 
-:readKeyLocal
-call:displayLocalBranchesWithSelected %branch%
-
-choice /c wasd /n
-cls
-
-if "%errorlevel%"=="1" call:prevLocalBranch branch
-if "%errorlevel%"=="2" goto:exit
-if "%errorlevel%"=="3" call:nextLocalBranch branch
-if "%errorlevel%"=="4" call:activate %branch%&goto:exit
-
-call:readKeyLocal %branch%
-goto:eof
-
-:activate
+:readKey
 setlocal
-  call:checkCurrentBranch current
-  if "%~1"=="%current%" (type nul) else git checkout %~1
+  set branch=%2
+  call:displayBranches %1 %branch%
+
+  choice /c wasd /n
+  cls
+
+  if "%errorlevel%"=="1" call:prev%1Branch branch
+  if "%errorlevel%"=="2" goto:exit
+  if "%errorlevel%"=="3" call:next%1Branch branch
+  if "%errorlevel%"=="4" call:activate%1 %branch%&goto:exit
+
+  call:readKey %1 %branch%
+endlocal
+goto:eof
+
+:execIter
+setlocal
+  (for /f "delims=" %%i in ('%1') do call:%~2 "%%i") 2>nul
+endlocal
+goto:eof
+
+:displayBranches
+setlocal EnableDelayedExpansion
+  call:execIter !GIT_%1_BRANCHES! "display%1Branch %2"
+endlocal
+goto:eof
+
+:displayLocalBranch
+setlocal
+  if "%1"=="%~2" (echo.* %~2) else (echo.  %~2)
+endlocal
+goto:eof
+
+:displayRemoteBranch
+setlocal
+  set head=%~2
+  call:displayLocalBranch %head:*refs/heads/=% %1
+endlocal
+goto:eof
+
+:activateLocal
+setlocal
+  call:getCurrentBranch current
+  if not "%~1"=="%current%" git checkout %~1
 endlocal
 goto:eof
 
@@ -76,9 +112,7 @@ setlocal EnableDelayedExpansion
   )) 2>nul
   set /a nextBranchIndex=curBranchIndex-1
   set nextBranch=!branches[%nextBranchIndex%]!
-(endlocal
-  if "%nextBranch%"=="" (type nul) else (set %~1=%nextBranch%)
-)
+endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
 goto:eof
 
 :nextLocalBranch
@@ -92,60 +126,7 @@ setlocal EnableDelayedExpansion
   )) 2>nul
   set /a nextBranchIndex=curBranchIndex+1
   set nextBranch=!branches[%nextBranchIndex%]!
-(endlocal
-  if "%nextBranch%"=="" (type nul) else (set %~1=%nextBranch%)
-)
-goto:eof
-
-:checkCurrentBranch
-setlocal
-  call:currentBranch branch
-  if not defined branch call:currentHead branch
-(endlocal
-  set %~1=%branch%
-)
-goto:eof
-
-:currentBranch
-  call:exec "git symbolic-ref --short -q HEAD" %~1
-goto:eof
-
-:currentHead
-  call:exec "git rev-parse --short HEAD" %~1
-goto:eof
-
-:displayLocalBranchesWithSelected
-setlocal
-  set cmd="git for-each-ref --format=%%(refname:short) refs/heads"
-  (for /f "delims=" %%i in ('%cmd%') do (
-    if "%%i"=="%~1" (echo.* %%i) else (echo.  %%i)
-  )) 2>nul
-endlocal
-goto:eof
-
-:readKeyRemote
-call:displayRemoteBranchesWithSelected %branch%
-
-choice /c wasd /n
-cls
-
-if "%errorlevel%"=="1" call:prevRemoteBranch branch
-if "%errorlevel%"=="2" goto:exit
-if "%errorlevel%"=="3" call:nextRemoteBranch branch
-if "%errorlevel%"=="4" call:createFromRemote %branch%&goto:exit
-
-call:readKeyRemote %branch%
-goto:eof
-
-:displayRemoteBranchesWithSelected
-setlocal EnableDelayedExpansion
-  set cmd="git ls-remote --heads origin"
-  (for /f "delims=" %%i in ('%cmd%') do (
-    set ref=%%i
-    set name=!ref:*refs/heads/=!
-    if "!name!"=="%~1" (echo.* !name!) else (echo.  !name!)
-  )) 2>nul
-endlocal
+endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
 goto:eof
 
 :prevRemoteBranch
@@ -161,9 +142,7 @@ setlocal EnableDelayedExpansion
   )) 2>nul
   set /a nextBranchIndex=curBranchIndex-1
   set nextBranch=!branches[%nextBranchIndex%]!
-(endlocal
-  if "%nextBranch%"=="" (type nul) else (set %~1=%nextBranch%)
-)
+endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
 goto:eof
 
 :nextRemoteBranch
@@ -179,12 +158,10 @@ setlocal EnableDelayedExpansion
   )) 2>nul
   set /a nextBranchIndex=curBranchIndex+1
   set nextBranch=!branches[%nextBranchIndex%]!
-(endlocal
-  if "%nextBranch%"=="" (type nul) else (set %~1=%nextBranch%)
-)
+endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
 goto:eof
 
-:createFromRemote
+:activateRemote
   git checkout -b %~1 origin/%~1
 goto:eof
 
