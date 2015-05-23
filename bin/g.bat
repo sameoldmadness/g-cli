@@ -69,7 +69,7 @@ setlocal
 endlocal
 goto:eof
 
-:execIter
+:execEach
 setlocal
   (for /f "delims=" %%i in ('%1') do call:%~2 "%%i") 2>nul
 endlocal
@@ -77,7 +77,7 @@ goto:eof
 
 :displayBranches
 setlocal EnableDelayedExpansion
-  call:execIter !GIT_%1_BRANCHES! "display%1Branch %2"
+  call:execEach !GIT_%1_BRANCHES! "display%1Branch %2"
 endlocal
 goto:eof
 
@@ -98,6 +98,12 @@ goto:eof
 setlocal
   call:getCurrentBranch current
   if not "%~1"=="%current%" git checkout %~1
+endlocal
+goto:eof
+
+:activateRemote
+setlocal
+  git checkout -b %~1 origin/%~1
 endlocal
 goto:eof
 
@@ -159,10 +165,6 @@ setlocal EnableDelayedExpansion
   set /a nextBranchIndex=curBranchIndex+1
   set nextBranch=!branches[%nextBranchIndex%]!
 endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
-goto:eof
-
-:activateRemote
-  git checkout -b %~1 origin/%~1
 goto:eof
 
 :displayHelp
