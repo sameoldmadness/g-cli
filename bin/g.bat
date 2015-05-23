@@ -32,10 +32,11 @@ endlocal
 goto:eof
 
 :runLoop
-setlocal
+setlocal EnableDelayedExpansion
   cls
   call:getCurrentBranch branch
-  call:readKey %1 %branch%
+  call:execMap !GIT_%1_BRANCHES! passthrough ";" branches
+  call:readKey %1 %branch% "%branches%"
 endlocal
 goto:eof
 
@@ -52,45 +53,26 @@ setlocal
 endlocal & set %~1=%return%
 goto:eof
 
-:readKey
+:readKey :: (type, branch, branches)
 setlocal
   set branch=%2
-  call:displayBranches %1 %branch%
+  call:displayBranches %branch% "%~3"
 
   choice /c wasd /n
   cls
 
-  if "%errorlevel%"=="1" call:prev%1Branch branch
+  if "%errorlevel%"=="1" call:changeBranch branch "%~3" up
   if "%errorlevel%"=="2" goto:exit
-  if "%errorlevel%"=="3" call:next%1Branch branch
+  if "%errorlevel%"=="3" call:changeBranch branch "%~3" down
   if "%errorlevel%"=="4" call:activate%1 %branch%&goto:exit
 
-  call:readKey %1 %branch%
+  call:readKey %1 %branch% "%~3"
 endlocal
 goto:eof
 
-:execEach
+:displayBranches :: (branch, branches)
 setlocal
-  (for /f "delims=" %%i in ('%1') do call:%~2 "%%i") 2>nul
-endlocal
-goto:eof
-
-:displayBranches
-setlocal EnableDelayedExpansion
-  call:execEach !GIT_%1_BRANCHES! "display%1Branch %2"
-endlocal
-goto:eof
-
-:displayLocalBranch
-setlocal
-  if "%1"=="%~2" (echo.* %~2) else (echo.  %~2)
-endlocal
-goto:eof
-
-:displayRemoteBranch
-setlocal
-  set head=%~2
-  call:displayLocalBranch %head:*refs/heads/=% %1
+  for %%i in (%branches%) do if "%%i"=="%1" (echo.* %%i) else (echo.  %%i)
 endlocal
 goto:eof
 
@@ -107,64 +89,33 @@ setlocal
 endlocal
 goto:eof
 
-:prevLocalBranch
+:execMap :: (command, callback, delimiter, return)
 setlocal EnableDelayedExpansion
-  set /a counter=0
-  set cmd="git for-each-ref --format=%%(refname:short) refs/heads"
-  (for /f "delims=" %%i in ('%cmd%') do (
-    set branches[!counter!]=%%i
-    if "%%i"=="!%~1!" set /a curBranchIndex=!counter!
-    set /a counter+=1
+  (for /f "delims=" %%i in ('%1') do (
+    call:%2 "%%i" item
+    set return=!return!%~3!item!
   )) 2>nul
-  set /a nextBranchIndex=curBranchIndex-1
-  set nextBranch=!branches[%nextBranchIndex%]!
-endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
+endlocal & set %4=%return:~1%
 goto:eof
 
-:nextLocalBranch
-setlocal EnableDelayedExpansion
-  set /a counter=0
-  set cmd="git for-each-ref --format=%%(refname:short) refs/heads"
-  (for /f "delims=" %%i in ('%cmd%') do (
-    set branches[!counter!]=%%i
-    if "%%i"=="!%~1!" set curBranchIndex=!counter!
-    set /a counter+=1
-  )) 2>nul
-  set /a nextBranchIndex=curBranchIndex+1
-  set nextBranch=!branches[%nextBranchIndex%]!
-endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
+:passthrough :: (value, return)
+setlocal
+  set value=%~1
+endlocal & set %2=%value:*refs/heads/=%
 goto:eof
 
-:prevRemoteBranch
+:changeBranch :: (branch, branches, direction)
 setlocal EnableDelayedExpansion
-  set /a counter=0
-  set cmd="git ls-remote --heads origin"
-  (for /f "delims=" %%i in ('%cmd%') do (
-    set ref=%%i
-    set name=!ref:*refs/heads/=!
-    set branches[!counter!]=!name!
-    if "!name!"=="!%~1!" set /a curBranchIndex=!counter!
-    set /a counter+=1
-  )) 2>nul
-  set /a nextBranchIndex=curBranchIndex-1
-  set nextBranch=!branches[%nextBranchIndex%]!
-endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
-goto:eof
-
-:nextRemoteBranch
-setlocal EnableDelayedExpansion
-  set /a counter=0
-  set cmd="git ls-remote --heads origin"
-  (for /f "delims=" %%i in ('%cmd%') do (
-    set ref=%%i
-    set name=!ref:*refs/heads/=!
-    set branches[!counter!]=!name!
-    if "!name!"=="!%~1!" set /a curBranchIndex=!counter!
-    set /a counter+=1
-  )) 2>nul
-  set /a nextBranchIndex=curBranchIndex+1
-  set nextBranch=!branches[%nextBranchIndex%]!
-endlocal & if not "%nextBranch%"=="" set %~1=%nextBranch%
+  set /a index=0
+  if "%3"=="up" (set sign=-) else (set sign=+)
+  for %%i in (%~2) do (
+    set /a index+=1
+    set branches[!index!]=%%i
+    if "%%i"=="!%~1!" set /a branchIndex=!index!
+  )
+  set /a branchIndex%sign%=1
+  set return=!branches[%branchIndex%]!
+endlocal & if not "%return%"=="" set %~1=%return%
 goto:eof
 
 :displayHelp
