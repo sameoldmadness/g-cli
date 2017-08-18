@@ -1,3 +1,4 @@
+#!/bin/bash
 VERSION="1.0.0"
 
 log() {
@@ -106,11 +107,11 @@ display_local_branches_with_selected() {
 }
 
 display_remote_branches_with_selected() {
-  selected=$1  
+  selected=$1
   local i=0
   echo
   for version in $remote_branches; do
-    [ -z "${selected}" ] && selected=$version    
+    [ -z "${selected}" ] && selected=$version
     if [ "$version" = "$selected" ]; then
       printf "  \033[36mο\033[0m $version\033[0m\n"
     else
