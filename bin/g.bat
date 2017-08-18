@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set VERSION=1.0.0
+set VERSION=1.0.1
 
 call:display %1
 goto:exit

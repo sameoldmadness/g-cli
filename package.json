@@ -1,7 +1,7 @@
 {
   "name": "g-cli",
   "description": "git version switcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Roman Paradeev <sameoldmadness@gmail.com>",
   "homepage": "https://github.com/sameoldmadness/g-cli",
   "bugs": "https://github.com/sameoldmadness/g-cli/issues",
